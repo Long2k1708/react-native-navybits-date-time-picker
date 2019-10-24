@@ -4,15 +4,10 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
 
 import com.facebook.react.bridge.Callback;
-import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
 import android.graphics.Color;
@@ -21,28 +16,28 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
-import com.wdullaer.materialdatetimepicker.date.DateRangeLimiter;
 import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
-import com.wdullaer.materialdatetimepicker.time.Timepoint;
 
 public class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
     DatePickerDialog dpd;
     private Callback callback;
+    private Callback cancelCallback;
     private boolean dismissOnPause, vibrate, darkTheme, autoDismiss, showYearPickerFirst;
     private int year, month, day;
     private String okText, title, cancelText, accentColor, okColor, cancelColor, scrollOrientation;
     private String minDate, maxDate;
 
-    public DatePickerFragment() {
-    }
+    public DatePickerFragment() {}
 
 
-    public DatePickerFragment(ReadableMap options, Callback callback) {
+    public DatePickerFragment(ReadableMap options, Callback callback, Callback cancelCallback) {
 
         this.callback = callback;
+        this.cancelCallback = cancelCallback;
         final Calendar c = Calendar.getInstance();
 
         title = options.hasKey("title") ? options.getString("title") : "";
@@ -64,11 +59,10 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
         okColor = options.hasKey("okColor") ? options.getString("okColor") : "#ffffff";
         cancelColor = options.hasKey("cancelColor") ? options.getString("cancelColor") : "#ffffff";
 
-        if( options.hasKey("minDate") )
-            minDate = options.getString("minDate") ;
-        if( options.hasKey("maxDate") )
-            maxDate =   options.getString("maxDate") ;
-
+        if (options.hasKey("minDate"))
+            minDate = options.getString("minDate");
+        if (options.hasKey("maxDate"))
+            maxDate = options.getString("maxDate");
 
 
     }
@@ -95,28 +89,26 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
         dpd.setCancelColor(Color.parseColor(cancelColor));
 
 
-        if(minDate!=null){
+        if (minDate != null) {
             Calendar cal1 = Calendar.getInstance();
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             try {
                 cal1.setTime(sdf.parse(minDate));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //The handling for the code
             }
 
             dpd.setMinDate(cal1);
 
         }
-        if(maxDate!=null) {
+        if (maxDate != null) {
             Calendar cal1 = Calendar.getInstance();
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             try {
                 cal1.setTime(sdf.parse(maxDate));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //The handling for the code
             }
             dpd.setMaxDate(cal1);
@@ -129,11 +121,13 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
             dpd.setScrollOrientation(DatePickerDialog.ScrollOrientation.VERTICAL);
 
 
-
         dpd.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
                 Log.d("TimePicker", "Dialog was cancelled");
+                cancelCallback.invoke();
+                getActivity().getFragmentManager().popBackStackImmediate();
+                getDialog().dismiss();
             }
         });
         dpd.show(getFragmentManager(), "Timepickerdialog");
@@ -152,17 +146,11 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int i, int i1, int i2) {
         int dayString = i2;
-        //hourOfDay < 10 ? "0" + hourOfDay : "" + hourOfDay;
         int yearString = i;
-        //minute < 10 ? "0" + minute : "" + minute;
-        int monthString = i1+1;
-        //second < 10 ? "0" + second : "" + second;
+        int monthString = i1 + 1;
         String date = "You picked the following date: " + yearString + "h" + monthString + "m" + dayString + "s";
-        callback.invoke(yearString, monthString,dayString);
+        callback.invoke(yearString, monthString, dayString);
         getActivity().getFragmentManager().popBackStackImmediate();
         getDialog().dismiss();
-        // getActivity().finish();
     }
-
-
 }

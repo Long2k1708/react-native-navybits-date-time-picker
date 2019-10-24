@@ -4,12 +4,9 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReadableArray;
@@ -30,6 +27,7 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
 
     TimePickerDialog tpd;
     private Callback callback;
+    private Callback cancelCallback;
     private boolean enableSeconds, enableMinutes, dismissOnPause, vibrate, darkTheme, is24Hour;
     private int hour, minute, second, minutesInterval, hoursInterval, secondsInterval;
     private String okText, title, cancelText, accentColor, okColor, cancelColor;
@@ -40,9 +38,10 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
     public TimePickerFragment() {
     }
 
-    public TimePickerFragment(ReadableMap options, Callback callback) {
+    public TimePickerFragment(ReadableMap options, Callback callback, Callback cancelCallback) {
 
         this.callback = callback;
+        this.cancelCallback = cancelCallback;
         final Calendar c = Calendar.getInstance();
 
         title = options.hasKey("title") ? options.getString("title") : "";
@@ -138,9 +137,9 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
 
         if (enableMinutes == true && enableSeconds == true)
             tpd = TimePickerDialog.newInstance(TimePickerFragment.this, hour, minute, second, is24Hour);
-        else 
+        else
             tpd = TimePickerDialog.newInstance(TimePickerFragment.this, hour, minute, is24Hour);
-     
+
         tpd.setTitle(title);
         tpd.setOkText(okText);
         tpd.setCancelText(cancelText);
@@ -205,6 +204,9 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
             @Override
             public void onCancel(DialogInterface dialogInterface) {
                 Log.d("TimePicker", "Dialog was cancelled");
+                cancelCallback.invoke();
+                getActivity().getFragmentManager().popBackStackImmediate();
+                getDialog().dismiss();
             }
         });
         tpd.show(getFragmentManager(), "Timepickerdialog");
@@ -229,6 +231,5 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
         callback.invoke(hourString, minuteString, secondString);
         getActivity().getFragmentManager().popBackStackImmediate();
         getDialog().dismiss();
-        // getActivity().finish();
     }
 }

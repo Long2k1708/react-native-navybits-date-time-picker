@@ -1,6 +1,6 @@
 
 package com.reactlibrary;
- 
+
 import android.app.Activity;
 import android.app.DialogFragment;
 
@@ -26,19 +26,19 @@ public class RNNavybitsDateTimePickerModule extends ReactContextBaseJavaModule {
 
 
     @ReactMethod
-    public void showTimePicker(ReadableMap options, Callback callback) {
-       String mode = options.hasKey("mode") ? options.getString("mode") : "time";
+    public void showTimePicker(ReadableMap options, Callback callback, Callback cancelCallback) {
+        String mode = options.hasKey("mode") ? options.getString("mode") : "time";
 
-       if(mode.equals("time")) {
-           DialogFragment timePicker = new TimePickerFragment(options, callback);
+        if (mode.equals("time")) {
+            DialogFragment timePicker = new TimePickerFragment(options, callback, cancelCallback);
 
-           timePicker.show(getCurrentActivity().getFragmentManager(), "timePicker");
-       }else{
-           DialogFragment datePicker = new DatePickerFragment(options, callback);
+            timePicker.show(getCurrentActivity().getFragmentManager(), "timePicker");
+        } else {
+            DialogFragment datePicker = new DatePickerFragment(options, callback, cancelCallback);
 
-           datePicker.show(getCurrentActivity().getFragmentManager(), "datePicker");
+            datePicker.show(getCurrentActivity().getFragmentManager(), "datePicker");
 
-       }
+        }
     }
 }
  

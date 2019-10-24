@@ -62,7 +62,6 @@ class DatePicker extends Component {
 
   setModalVisible(visible) {
     const { height, duration } = this.props;
-
     // slide animation
     if (visible) {
       this.setState({ modalVisible: visible });
@@ -98,7 +97,6 @@ class DatePicker extends Component {
 
   onPressCancel() {
     this.setModalVisible(false);
-
     if (typeof this.props.onCancel === "function") {
       this.props.onCancel();
     }
@@ -111,12 +109,10 @@ class DatePicker extends Component {
     this.datePicked();
     this.setModalVisible(false);
 
-    if (typeof this.props.onConfirm === "function") {
+    if (typeof this.props.onConfirm === "function")
       this.props.onConfirm(this.state.date);
-    }
-    if (typeof this.props.onCloseModal === "function") {
+    if (typeof this.props.onCloseModal === "function")
       this.props.onCloseModal();
-    }
   }
 
   getDate(date = this.props.date) {
@@ -240,26 +236,22 @@ class DatePicker extends Component {
         };
       }
     }
-    // console.log({ options });
+
     if (options.mode == "time")
-      RCTDateTimePicker.showTimePicker(options, function(hour, minute, second) {
-        //ƒconsole.log({ hour, minute, second });
+      RCTDateTimePicker.showTimePicker(options, (hour, minute, second) => {
         let newDate = new Date();
         newDate.setHours(hour);
         newDate.setMinutes(minute);
         newDate.setSeconds(second);
-        //console.log({ newDate });
         if (hour && minute) _this._handleDatePicked(newDate);
         else _this._handleDatePicked(null);
-      });
+      }, this._hideDateTimePicker);
     else
-      RCTDateTimePicker.showTimePicker(options, function(year, month, day) {
-        // console.log({ year, month, day });
+      RCTDateTimePicker.showTimePicker(options, (year, month, day) => {
         let newDate = new Date(year, month - 1, day);
-        //  console.log({ newDate });
         if (year && month) _this._handleDatePicked(newDate);
         else _this._handleDatePicked(null);
-      });
+      }, this._hideDateTimePicker);
   }
 
   _handleDatePicked = date => {
@@ -272,10 +264,12 @@ class DatePicker extends Component {
       });
       onConfirm && onConfirm(date);
     } else {
+      this._hideDateTimePicker();
       onCancel && onCancel();
     }
     this._hideDateTimePicker();
   };
+
   _hideDateTimePicker = () => this.setState({ isDateTimePickerVisible: false });
 
   onDateChange(date) {
@@ -292,7 +286,8 @@ class DatePicker extends Component {
   }
 
   onPressDate() {
-    if (this.props.disabled) {
+    const { disabled, onOpenModal, minuteInterval } = this.props;
+    if (disabled) {
       return true;
     }
 
@@ -300,18 +295,34 @@ class DatePicker extends Component {
 
     // reset state
     this.setState({
-      date: this.getDate()
+      date: Math.trunc(minuteInterval / 10) + 5 === minuteInterval ? this._getInitialDate() : this.getDate()
     });
 
     if (Platform.OS == "ios") {
       this.setModalVisible(true);
 
-      if (typeof this.props.onOpenModal === "function") {
-        this.props.onOpenModal();
+      if (typeof onOpenModal === "function") {
+        onOpenModal();
       }
     } else {
       this.showTimePicker(this.state.date);
     }
+  }
+
+  _getInitialDate() {
+    let now = new Date();
+    let correctTime = new Date();
+    let correctMinute;
+    if (now.getMinutes() >= 10) {
+      let minNow = now.getMinutes();
+      let minRound = Math.trunc(now.getMinutes() / 10) * 10;
+      correctMinute = (minNow - minRound) < 5 ? minRound : minRound + 5;
+    } else {
+      let minNow = now.getMinutes();
+      correctMinute = minNow < 5 ? 0 : 5;
+    }
+    correctTime.setMinutes(correctMinute);
+    return correctTime;
   }
 
   render() {
@@ -361,21 +372,19 @@ class DatePicker extends Component {
           ) : !this.props.hideText ? (
             <View style={dateInputStyle}>{this.getTitleElement()}</View>
           ) : (
-            <View />
-          )}
+                <View />
+              )}
           <Modal
             transparent={true}
             animationType="none"
             visible={this.state.modalVisible}
             supportedOrientations={SUPPORTED_ORIENTATIONS}
-            onRequestClose={() => {
-              this.setModalVisible(false);
-            }}
+            onRequestClose={() => this.setModalVisible(false)}
           >
             <View style={{ flex: 1 }}>
               <TouchableComponent
                 style={[styles.datePickerMask]}
-                activeOpacity={1}
+                activeOpacity={0.5}
                 underlayColor={"#00000077"}
                 onPress={this.onPressMask}
               >
@@ -398,7 +407,6 @@ class DatePicker extends Component {
                         underlayColor={"transparent"}
                         onPress={this.onPressCancel}
                         style={[
-                          // styles.btnText,
                           styles.btnCancel,
                           customStyles.btnCancel
                         ]}
@@ -427,7 +435,6 @@ class DatePicker extends Component {
                         underlayColor={"transparent"}
                         onPress={this.onPressConfirm}
                         style={[
-                          // styles.btnText,
                           styles.btnConfirm,
                           customStyles.btnConfirm
                         ]}
@@ -457,9 +464,6 @@ class DatePicker extends Component {
                       <DatePickerIOS
                         date={this.state.date}
                         mode={mode}
-                        ref={picker => {
-                          this._picker = picker;
-                        }}
                         minimumDate={minDate && this.getDate(minDate)}
                         maximumDate={maxDate && this.getDate(maxDate)}
                         onDateChange={this.onDateChange}
